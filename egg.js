@@ -48,7 +48,7 @@ function parse(program) {
   return expr;
 }
 
-console.log(parse("+(a,10)"));
+// console.log(parse("+(a,10)"));
 
 function evaluate(expr, scope) {
   if (expr.type == "value") {
@@ -61,7 +61,7 @@ function evaluate(expr, scope) {
     }
   } else if (expr.type == "apply") {
     let { operator, args } = expr;
-    if (operator.type == "word" && operator.name in specialForm) {
+    if (operator.type == "word" && operator.name in specialForms) {
       return specialForms[operator.name](expr.args, scope);
     } else {
       let op = evaluate(operator, scope);
@@ -114,3 +114,33 @@ specialForms.define = (args, scope) => {
   scope[args[0].name] = value;
   return value;
 };
+
+const topScope = Object.create(null);
+
+topScope.true = true;
+topScope.false = false;
+
+// let prog = parse(`if(true, false, true)`);
+// console.log(evaluate(prog, topScope));
+
+for (let op of ["+", "-", "*", "/", "==", "<", ">"]) {
+  topScope[op] = Function("a, b", `return a ${op} b;`);
+}
+
+topScope.print = (value) => {
+  console.log(value);
+  return value;
+};
+
+function run(program) {
+  return evaluate(parse(program), Object.create(topScope));
+}
+
+run(`
+do(define(total, 0),
+define(count, 1),
+while(<(count, 11),
+do(define(total, +(total, count)),
+define(count, +(count, 1)))),
+print(total))
+`);
